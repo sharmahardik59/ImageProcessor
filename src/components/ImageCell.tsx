@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useMemo, useRef} from 'react';
 import {Image, Platform, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import type {ImageMetadata} from '../types';
 
@@ -27,7 +27,15 @@ function ImageCellInner({
   onPress,
   onLongPress,
 }: Props) {
-  const handlePress = useCallback(() => onPress(id), [id, onPress]);
+  const lastPressTime = useRef<number>(0);
+
+  const handlePress = useCallback(() => {
+    const now = Date.now();
+    if (now - lastPressTime.current > 500) {
+      lastPressTime.current = now;
+      onPress(id);
+    }
+  }, [id, onPress]);
   const handleLongPress = useCallback(() => onLongPress(id), [id, onLongPress]);
 
   const imgSize = cellSize - 6;
