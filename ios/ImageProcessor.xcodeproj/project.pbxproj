@@ -12,6 +12,9 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		7CCF7BE06749BAA9C49304D5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		A1B2C3D4E5F60001 /* ImageProcessorModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60002 /* ImageProcessorModule.swift */; };
+		A1B2C3D4E5F60003 /* ImageProcessorModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60004 /* ImageProcessorModule.m */; };
+		A1B2C3D4E5F60005 /* BundledImages in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60006 /* BundledImages */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +27,10 @@
 		5DCACB8F33CDC322A6C60F78 /* libPods-ImageProcessor.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ImageProcessor.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = ImageProcessor/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = ImageProcessor/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		A1B2C3D4E5F60002 /* ImageProcessorModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ImageProcessorModule.swift; path = ImageProcessor/ImageProcessorModule.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60004 /* ImageProcessorModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = ImageProcessorModule.m; path = ImageProcessor/ImageProcessorModule.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F60006 /* BundledImages */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BundledImages; path = ImageProcessor/BundledImages; sourceTree = "<group>"; };
+		A1B2C3D4E5F60007 /* ImageProcessor-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ImageProcessor-Bridging-Header.h"; path = "ImageProcessor/ImageProcessor-Bridging-Header.h"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -44,9 +51,13 @@
 			children = (
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
+				A1B2C3D4E5F60002 /* ImageProcessorModule.swift */,
+				A1B2C3D4E5F60004 /* ImageProcessorModule.m */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				A1B2C3D4E5F60006 /* BundledImages */,
+				A1B2C3D4E5F60007 /* ImageProcessor-Bridging-Header.h */,
 			);
 			name = ImageProcessor;
 			sourceTree = "<group>";
@@ -161,6 +172,7 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				7CCF7BE06749BAA9C49304D5 /* PrivacyInfo.xcprivacy in Resources */,
+				A1B2C3D4E5F60005 /* BundledImages in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -247,6 +259,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				A1B2C3D4E5F60001 /* ImageProcessorModule.swift in Sources */,
+				A1B2C3D4E5F60003 /* ImageProcessorModule.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -276,6 +290,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = ImageProcessor;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OBJC_BRIDGING_HEADER = "ImageProcessor/ImageProcessor-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -305,6 +320,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = ImageProcessor;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OBJC_BRIDGING_HEADER = "ImageProcessor/ImageProcessor-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";

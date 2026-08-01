@@ -12,7 +12,6 @@
   "dependencies": {
     "react": "19.2.3",
     "react-native": "0.86.2",
-    "@react-native/new-app-screen": "0.86.2",
     "react-native-safe-area-context": "^5.5.2"
   },
   "devDependencies": {
@@ -35,6 +34,14 @@
     "prettier": "2.8.8",
     "react-test-renderer": "19.2.3",
     "typescript": "^5.8.3"
+  },
+  "codegenConfig": {
+    "name": "NativeImageProcessorSpec",
+    "type": "modules",
+    "jsSrcsDir": "src/specs",
+    "android": {
+      "javaPackageName": "com.imageprocessor"
+    }
   },
   "engines": {
     "node": ">= 22.11.0"
