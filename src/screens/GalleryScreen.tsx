@@ -167,15 +167,6 @@ export function GalleryScreen() {
 
   const keyExtractor = useCallback((item: GalleryItem) => item.id, []);
 
-  const getItemLayout = useCallback(
-    (_: any, index: number) => ({
-      length: CELL_SIZE + 28,
-      offset: (CELL_SIZE + 28) * Math.floor(index / COLUMNS),
-      index,
-    }),
-    [],
-  );
-
   const renderItem = useCallback(
     ({item}: {item: GalleryItem}) => (
       <ImageCell
@@ -256,13 +247,13 @@ export function GalleryScreen() {
 
   return (
     <View style={[styles.container, {paddingTop: insets.top}]}>
+      {header}
       <FlatList
+        style={{flex: 1}}
         data={items}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         numColumns={COLUMNS}
-        ListHeaderComponent={header}
-        getItemLayout={getItemLayout}
         maxToRenderPerBatch={12}
         windowSize={5}
         initialNumToRender={15}

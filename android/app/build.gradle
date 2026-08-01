@@ -84,7 +84,7 @@ android {
     // top level of the assets directory.
     sourceSets {
         main {
-            assets.srcDirs += '../../../../images'
+            assets.srcDirs += '../../images'
         }
     }
 
