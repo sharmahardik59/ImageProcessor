@@ -34,7 +34,6 @@ export function GalleryScreen() {
 
   const metaCache = useRef<Record<string, ImageMetadata>>({});
 
-  // Copy bundled images into cache on first mount
   useEffect(() => {
     let alive = true;
 
@@ -63,7 +62,6 @@ export function GalleryScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync thumbnails from the processor into our items
   useEffect(() => {
     if (processor.thumbnails.length === 0) return;
 
@@ -75,7 +73,6 @@ export function GalleryScreen() {
     );
   }, [processor.thumbnails]);
 
-  // Fetch metadata as thumbnails come in
   useEffect(() => {
     if (processor.thumbnails.length === 0) return;
 
@@ -93,7 +90,6 @@ export function GalleryScreen() {
             batch[id] = m;
             count++;
 
-            // flush every 10 items to avoid huge single update
             if (count % 10 === 0) {
               const update = {...batch};
               setMetaMap(prev => ({...prev, ...update}));
@@ -104,7 +100,6 @@ export function GalleryScreen() {
           }
         }
       }
-      // flush remaining
       if (Object.keys(batch).length > 0) {
         setMetaMap(prev => ({...prev, ...batch}));
       }

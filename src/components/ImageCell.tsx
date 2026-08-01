@@ -32,7 +32,6 @@ function ImageCellInner({
 
   const imgSize = cellSize - 6;
 
-  // cache the source object so Image doesn't re-create it every render
   const imageSource = useMemo(
     () => (thumbnailUri ? {uri: thumbnailUri} : null),
     [thumbnailUri],
@@ -59,7 +58,6 @@ function ImageCellInner({
             source={imageSource}
             style={{width: imgSize, height: imgSize}}
             resizeMode="cover"
-            // Android default fade-in causes jank during fast scroll
             fadeDuration={0}
           />
         ) : (
