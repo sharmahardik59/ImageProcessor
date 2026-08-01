@@ -4,7 +4,6 @@ import {
   Alert,
   Dimensions,
   FlatList,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -14,6 +13,7 @@ import {useImageProcessor} from '../hooks/useImageProcessor';
 import {ImageCell} from '../components/ImageCell';
 import {ProgressBar} from '../components/ProgressBar';
 import {ImagePreviewModal} from '../components/ImagePreviewModal';
+import {galleryStyles as styles} from './GalleryScreen.styles';
 import type {GalleryItem, ImageMetadata} from '../types';
 
 const COLUMNS = 3;
@@ -41,11 +41,6 @@ export function GalleryScreen() {
     processor.copyBundledImages()
       .then(uris => {
         if (!alive) return;
-
-        // Verify: log first few URIs to confirm they come from cache dir
-        console.log(`[ImageProcessor] Loaded ${uris.length} images`);
-        console.log('[ImageProcessor] Sample URI:', uris[0]);
-
         setItems(
           uris.map((uri, i) => ({
             id: `img_${i}`,
@@ -85,6 +80,9 @@ export function GalleryScreen() {
     if (processor.thumbnails.length === 0) return;
 
     (async () => {
+      let batch: Record<string, ImageMetadata> = {};
+      let count = 0;
+
       for (let i = 0; i < processor.thumbnails.length; i++) {
         const thumb = processor.thumbnails[i];
         const id = `img_${i}`;
@@ -92,16 +90,26 @@ export function GalleryScreen() {
           try {
             const m = await processor.getImageMetadata(thumb);
             metaCache.current[id] = m;
-            setMetaMap(prev => ({...prev, [id]: m}));
+            batch[id] = m;
+            count++;
+
+            // flush every 10 items to avoid huge single update
+            if (count % 10 === 0) {
+              const update = {...batch};
+              setMetaMap(prev => ({...prev, ...update}));
+              batch = {};
+            }
           } catch {
             // not critical
           }
         }
       }
+      // flush remaining
+      if (Object.keys(batch).length > 0) {
+        setMetaMap(prev => ({...prev, ...batch}));
+      }
     })();
   }, [processor.thumbnails, processor.getImageMetadata]);
-
-  // Handlers
 
   const onGenerate = useCallback(() => {
     if (items.length === 0) return;
@@ -112,6 +120,17 @@ export function GalleryScreen() {
 
   const onItemPress = useCallback(
     (id: string) => {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+
+      if (!item.thumbnailUri) {
+        Alert.alert(
+          'Thumbnail Not Ready',
+          'Please generate thumbnails first before previewing images.',
+        );
+        return;
+      }
+
       if (multiSelect) {
         setSelected(prev => {
           const next = new Set(prev);
@@ -120,17 +139,6 @@ export function GalleryScreen() {
           return next;
         });
       } else {
-        const item = items.find(i => i.id === id);
-        if (!item) return;
-
-        if (!item.thumbnailUri) {
-          Alert.alert(
-            'Thumbnail Not Ready',
-            'Please generate thumbnails first before previewing images.',
-          );
-          return;
-        }
-
         setPreviewUri(item.sourceUri);
         setShowPreview(true);
       }
@@ -139,13 +147,16 @@ export function GalleryScreen() {
   );
 
   const onItemLongPress = useCallback((id: string) => {
+    const item = items.find(i => i.id === id);
+    if (!item?.thumbnailUri) return;
+
     setMultiSelect(true);
     setSelected(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
-  }, []);
+  }, [items]);
 
   const onDeleteSelected = useCallback(() => {
     setItems(prev => prev.filter(it => !selected.has(it.id)));
@@ -162,8 +173,6 @@ export function GalleryScreen() {
     setMultiSelect(false);
     setSelected(new Set());
   }, []);
-
-  // FlatList stuff
 
   const keyExtractor = useCallback((item: GalleryItem) => item.id, []);
 
@@ -182,7 +191,7 @@ export function GalleryScreen() {
     [metaMap, selected, onItemPress, onItemLongPress],
   );
 
-  const header = useMemo(
+  const listHeader = useMemo(
     () => (
       <View style={styles.header}>
         <Text style={styles.title}>Image Gallery</Text>
@@ -202,37 +211,19 @@ export function GalleryScreen() {
               <Text style={styles.btnText}>Generate Thumbnails</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.dangerBtn} onPress={onCancel} activeOpacity={0.7}>
+            <TouchableOpacity style={[styles.dangerBtn, {flex: 1}]} onPress={onCancel} activeOpacity={0.7}>
               <Text style={styles.btnText}>Cancel</Text>
             </TouchableOpacity>
           )}
         </View>
-
-        {multiSelect && (
-          <View style={styles.selectBar}>
-            <Text style={styles.selectLabel}>{selected.size} selected</Text>
-            <View style={{flexDirection: 'row', gap: 8}}>
-              <TouchableOpacity style={styles.dangerBtn} onPress={onDeleteSelected}>
-                <Text style={styles.btnText}>Delete</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.secondaryBtn} onPress={onCancelSelect}>
-                <Text style={styles.secondaryBtnText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
       </View>
     ),
     [
       items.length,
       processor.progress,
       processor.isProcessing,
-      multiSelect,
-      selected.size,
       onGenerate,
       onCancel,
-      onDeleteSelected,
-      onCancelSelect,
     ],
   );
 
@@ -247,22 +238,36 @@ export function GalleryScreen() {
 
   return (
     <View style={[styles.container, {paddingTop: insets.top}]}>
-      {header}
       <FlatList
         style={{flex: 1}}
         data={items}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         numColumns={COLUMNS}
-        maxToRenderPerBatch={12}
-        windowSize={5}
-        initialNumToRender={15}
+        ListHeaderComponent={listHeader}
+        maxToRenderPerBatch={15}
+        windowSize={7}
+        initialNumToRender={18}
         removeClippedSubviews
         updateCellsBatchingPeriod={50}
         contentContainerStyle={[styles.list, {paddingBottom: insets.bottom + 16}]}
         showsVerticalScrollIndicator={false}
         extraData={selected}
       />
+
+      {multiSelect && (
+        <View style={[styles.selectBar, {paddingBottom: insets.bottom || 10}]}>
+          <Text style={styles.selectLabel}>{selected.size} selected</Text>
+          <View style={{flexDirection: 'row', gap: 8}}>
+            <TouchableOpacity style={styles.dangerBtn} onPress={onDeleteSelected}>
+              <Text style={styles.btnText}>Delete</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.secondaryBtn} onPress={onCancelSelect}>
+              <Text style={styles.secondaryBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       <ImagePreviewModal
         visible={showPreview}
@@ -275,26 +280,3 @@ export function GalleryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#fff'},
-  center: {flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center'},
-  header: {paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8},
-  title: {fontSize: 22, fontWeight: '700', color: '#000'},
-  subtitle: {fontSize: 13, color: '#666', marginTop: 2, marginBottom: 8},
-  btnRow: {flexDirection: 'row', marginTop: 8, marginBottom: 4},
-  primaryBtn: {flex: 1, backgroundColor: '#007AFF', paddingVertical: 12, alignItems: 'center'},
-  dangerBtn: {backgroundColor: '#FF3B30', paddingHorizontal: 14, paddingVertical: 8, alignItems: 'center'},
-  btnText: {color: '#fff', fontSize: 15, fontWeight: '600'},
-  selectBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    padding: 10,
-    marginTop: 8,
-  },
-  selectLabel: {color: '#007AFF', fontSize: 14, fontWeight: '600'},
-  secondaryBtn: {backgroundColor: '#ddd', paddingHorizontal: 14, paddingVertical: 8},
-  secondaryBtnText: {color: '#333', fontSize: 13, fontWeight: '600'},
-  list: {paddingHorizontal: 0, alignItems: 'center'},
-});

@@ -1,5 +1,5 @@
-import React, {useCallback} from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useCallback, useMemo} from 'react';
+import {Image, Platform, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import type {ImageMetadata} from '../types';
 
 type Props = {
@@ -32,6 +32,16 @@ function ImageCellInner({
 
   const imgSize = cellSize - 6;
 
+  // cache the source object so Image doesn't re-create it every render
+  const imageSource = useMemo(
+    () => (thumbnailUri ? {uri: thumbnailUri} : null),
+    [thumbnailUri],
+  );
+
+  const metaLabel = metadata
+    ? `${metadata.width}x${metadata.height} - ${formatSize(metadata.fileSize)}`
+    : 'Loading...';
+
   return (
     <TouchableOpacity
       activeOpacity={0.7}
@@ -44,11 +54,13 @@ function ImageCellInner({
           {width: cellSize, height: cellSize + 28},
           isSelected && styles.selected,
         ]}>
-        {thumbnailUri ? (
+        {imageSource ? (
           <Image
-            source={{uri: thumbnailUri}}
+            source={imageSource}
             style={{width: imgSize, height: imgSize}}
             resizeMode="cover"
+            // Android default fade-in causes jank during fast scroll
+            fadeDuration={0}
           />
         ) : (
           <View style={[styles.placeholder, {width: imgSize, height: imgSize}]} />
@@ -56,9 +68,7 @@ function ImageCellInner({
 
         <View style={styles.info}>
           <Text style={styles.infoText} numberOfLines={1}>
-            {metadata
-              ? `${metadata.width}x${metadata.height} - ${formatSize(metadata.fileSize)}`
-              : 'Loading...'}
+            {metaLabel}
           </Text>
         </View>
       </View>

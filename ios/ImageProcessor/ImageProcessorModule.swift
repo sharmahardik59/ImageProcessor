@@ -86,6 +86,7 @@ class ImageProcessorModule: NSObject {
           }
         }
 
+        uris.shuffle()
         resolve(uris)
       } catch {
         reject("E_COPY_FAILED", error.localizedDescription, error)

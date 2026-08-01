@@ -79,9 +79,7 @@ android {
 
     namespace "com.imageprocessor"
 
-    // Bundle images from the project root images/ folder directly into assets.
-    // The native code reads from assets root ("") since these files land at the
-    // top level of the assets directory.
+    // include sample images from project root as assets
     sourceSets {
         main {
             assets.srcDirs += '../../images'

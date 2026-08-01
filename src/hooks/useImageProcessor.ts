@@ -16,11 +16,12 @@ export function useImageProcessor() {
   const thumbnailsRef = useRef<(string | null)[]>([]);
   const mountedRef = useRef(true);
   const gotEventsRef = useRef(false);
+  const cancelledRef = useRef(false);
 
   // Listen for per-image progress events from native
   useEffect(() => {
     const sub = eventEmitter.addListener('onProgress', (event: any) => {
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || cancelledRef.current) return;
 
       gotEventsRef.current = true;
       const {completed, total, lastUri} = event;
@@ -54,6 +55,7 @@ export function useImageProcessor() {
       if (!mountedRef.current) return;
 
       gotEventsRef.current = false;
+      cancelledRef.current = false;
       setIsProcessing(true);
       setProgress({completed: 0, total: uris.length});
 
@@ -63,7 +65,7 @@ export function useImageProcessor() {
 
       try {
         const result: string[] = await ImageProcessor.generateThumbnails(uris, thumbSize);
-        if (!mountedRef.current) return;
+        if (!mountedRef.current || cancelledRef.current) return;
 
         if (!gotEventsRef.current && result.length > 0) {
           // Events didn't fire (can happen on some Android builds) —
@@ -72,14 +74,14 @@ export function useImageProcessor() {
           let revealed = 0;
 
           const revealNext = () => {
-            if (!mountedRef.current) return;
+            if (!mountedRef.current || cancelledRef.current) return;
             const end = Math.min(revealed + batchSize, result.length);
             for (let i = revealed; i < end; i++) {
               thumbnailsRef.current[i] = result[i];
             }
             revealed = end;
             setThumbnails([...thumbnailsRef.current]);
-            setProgress({completed: revealed, total: result.length});
+            setProgress({completed: revealed, total: uris.length});
 
             if (revealed < result.length) {
               requestAnimationFrame(revealNext);
@@ -102,6 +104,7 @@ export function useImageProcessor() {
   );
 
   const cancel = useCallback(() => {
+    cancelledRef.current = true;
     ImageProcessor.cancelProcessing();
     setIsProcessing(false);
   }, []);

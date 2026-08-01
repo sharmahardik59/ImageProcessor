@@ -44,7 +44,6 @@ class ImageProcessorModule(private val reactContext: ReactApplicationContext) :
                 destDir.mkdirs()
 
                 val assets = reactContext.assets
-                // Images are bundled at the assets root via gradle sourceSets config
                 val imageFiles = assets.list("")
                     ?.filter { name ->
                         val ext = name.substringAfterLast(".", "").lowercase()
@@ -58,8 +57,9 @@ class ImageProcessorModule(private val reactContext: ReactApplicationContext) :
                     return@execute
                 }
 
-                val result = WritableNativeArray()
+                // shuffle so we don't get all copies of same image next to each other
                 val copiesPerFile = (TARGET_IMAGE_COUNT / imageFiles.size).coerceAtLeast(1)
+                val uris = mutableListOf<String>()
 
                 for ((idx, filename) in imageFiles.withIndex()) {
                     val ext = filename.substringAfterLast(".", "")
@@ -68,9 +68,14 @@ class ImageProcessorModule(private val reactContext: ReactApplicationContext) :
                         assets.open(filename).use { input ->
                             FileOutputStream(outFile).use { output -> input.copyTo(output) }
                         }
-                        result.pushString(Uri.fromFile(outFile).toString())
+                        uris.add(Uri.fromFile(outFile).toString())
                     }
                 }
+
+                uris.shuffle()
+
+                val result = WritableNativeArray()
+                uris.forEach { result.pushString(it) }
 
                 promise.resolve(result)
             } catch (e: Exception) {
