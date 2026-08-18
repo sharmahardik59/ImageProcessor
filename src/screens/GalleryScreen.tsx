@@ -73,6 +73,8 @@ export function GalleryScreen() {
     );
   }, [processor.thumbnails]);
 
+  const {getImageMetadata} = processor;
+
   useEffect(() => {
     if (processor.thumbnails.length === 0) return;
 
@@ -85,7 +87,7 @@ export function GalleryScreen() {
         const id = `img_${i}`;
         if (thumb && !metaCache.current[id]) {
           try {
-            const m = await processor.getImageMetadata(thumb);
+            const m = await getImageMetadata(thumb);
             metaCache.current[id] = m;
             batch[id] = m;
             count++;
@@ -104,7 +106,7 @@ export function GalleryScreen() {
         setMetaMap(prev => ({...prev, ...batch}));
       }
     })();
-  }, [processor.thumbnails, processor.getImageMetadata]);
+  }, [processor.thumbnails, getImageMetadata]);
 
   const onGenerate = useCallback(() => {
     if (items.length === 0) return;
@@ -129,7 +131,11 @@ export function GalleryScreen() {
       if (multiSelect) {
         setSelected(prev => {
           const next = new Set(prev);
-          next.has(id) ? next.delete(id) : next.add(id);
+          if (next.has(id)) {
+            next.delete(id);
+          } else {
+            next.add(id);
+          }
           if (next.size === 0) setMultiSelect(false);
           return next;
         });
@@ -148,7 +154,11 @@ export function GalleryScreen() {
     setMultiSelect(true);
     setSelected(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   }, [items]);
@@ -206,7 +216,7 @@ export function GalleryScreen() {
               <Text style={styles.btnText}>Generate Thumbnails</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={[styles.dangerBtn, {flex: 1}]} onPress={onCancel} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.dangerBtnFull} onPress={onCancel} activeOpacity={0.7}>
               <Text style={styles.btnText}>Cancel</Text>
             </TouchableOpacity>
           )}
@@ -226,7 +236,7 @@ export function GalleryScreen() {
     return (
       <View style={[styles.center, {paddingTop: insets.top}]}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={{color: '#333', marginTop: 12}}>Loading images...</Text>
+        <Text style={styles.loadingText}>Loading images...</Text>
       </View>
     );
   }
@@ -234,7 +244,7 @@ export function GalleryScreen() {
   return (
     <View style={[styles.container, {paddingTop: insets.top}]}>
       <FlatList
-        style={{flex: 1}}
+        style={styles.flex1}
         data={items}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
@@ -253,7 +263,7 @@ export function GalleryScreen() {
       {multiSelect && (
         <View style={[styles.selectBar, {paddingBottom: insets.bottom || 10}]}>
           <Text style={styles.selectLabel}>{selected.size} selected</Text>
-          <View style={{flexDirection: 'row', gap: 8}}>
+          <View style={styles.btnGroup}>
             <TouchableOpacity style={styles.dangerBtn} onPress={onDeleteSelected}>
               <Text style={styles.btnText}>Delete</Text>
             </TouchableOpacity>
@@ -274,4 +284,3 @@ export function GalleryScreen() {
     </View>
   );
 }
-

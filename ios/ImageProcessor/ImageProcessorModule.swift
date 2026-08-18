@@ -2,55 +2,26 @@ import Foundation
 import UIKit
 import React
 
-@objc(ImageProcessor)
-class ImageProcessorModule: NSObject {
-
-  @objc weak var bridge: RCTBridge?
+@objc(ImageProcessorSwiftModule)
+public class ImageProcessorSwiftModule: NSObject {
 
   private var isCancelled = false
-  private var listenerCount = 0
+  @objc public var onProgressCallback: (([String: Any]) -> Void)?
 
-  /// Serial queue for all image work — keeps things simple and avoids concurrent UIKit issues
   private let queue = DispatchQueue(label: "com.imageprocessor.work", qos: .userInitiated)
 
-  @objc static func requiresMainQueueSetup() -> Bool { false }
-  @objc static func moduleName() -> String { "ImageProcessor" }
-
-  // MARK: - Event helpers
-
-  private func sendEvent(_ name: String, body: [String: Any]) {
-    guard listenerCount > 0 else { return }
-    DispatchQueue.main.async { [weak self] in
-      self?.bridge?.enqueueJSCall(
-        "RCTDeviceEventEmitter",
-        method: "emit",
-        args: [name, body],
-        completion: nil
-      )
-    }
+  @objc public override init() {
+    super.init()
   }
 
-  @objc func addListener(_ eventName: String) {
-    listenerCount += 1
-  }
-
-  @objc func removeListeners(_ count: Double) {
-    listenerCount = max(0, listenerCount - Int(count))
-  }
-
-  // MARK: - Copy bundled sample images
-
-  /// Copies images from the app bundle into caches, duplicating them to get ~234 total
-  /// for stress-testing scroll performance in the gallery.
-  @objc func copyBundledImages(_ resolve: @escaping RCTPromiseResolveBlock,
-                                reject: @escaping RCTPromiseRejectBlock) {
+  @objc public func copyBundledImages(_ resolve: @escaping RCTPromiseResolveBlock,
+                                      reject: @escaping RCTPromiseRejectBlock) {
     queue.async {
       do {
         let fm = FileManager.default
         let cacheDir = fm.urls(for: .cachesDirectory, in: .userDomainMask)[0]
           .appendingPathComponent("BundledImagesCopy", isDirectory: true)
 
-        // Start fresh each time
         if fm.fileExists(atPath: cacheDir.path) {
           try fm.removeItem(at: cacheDir)
         }
@@ -70,7 +41,6 @@ class ImageProcessorModule: NSObject {
           return
         }
 
-        // Duplicate each source image enough times to hit ~234 total
         let targetCount = 234
         let copiesEach = max(1, targetCount / imageFiles.count)
         var uris: [String] = []
@@ -94,15 +64,12 @@ class ImageProcessorModule: NSObject {
     }
   }
 
-  // MARK: - Resize
-
-  /// Scales down an image to fit within the given bounds. Won't upscale.
-  @objc func resizeImage(_ uri: String,
-                          maxWidth: Double,
-                          maxHeight: Double,
-                          quality: Double,
-                          resolve: @escaping RCTPromiseResolveBlock,
-                          reject: @escaping RCTPromiseRejectBlock) {
+  @objc public func resizeImage(_ uri: String,
+                                maxWidth: Double,
+                                maxHeight: Double,
+                                quality: Double,
+                                resolve: @escaping RCTPromiseResolveBlock,
+                                reject: @escaping RCTPromiseRejectBlock) {
     queue.async {
       guard let url = URL(string: uri),
             let data = try? Data(contentsOf: url),
@@ -117,7 +84,6 @@ class ImageProcessorModule: NSObject {
                       1.0)
       let newSize = CGSize(width: origSize.width * scale, height: origSize.height * scale)
 
-      // scale=1 so we get exact pixel dimensions, not retina-multiplied
       let fmt = UIGraphicsImageRendererFormat()
       fmt.scale = 1.0
 
@@ -134,18 +100,15 @@ class ImageProcessorModule: NSObject {
     }
   }
 
-  // MARK: - Metadata
-
-  @objc func getImageMetadata(_ uri: String,
-                               resolve: @escaping RCTPromiseResolveBlock,
-                               reject: @escaping RCTPromiseRejectBlock) {
+  @objc public func getImageMetadata(_ uri: String,
+                                     resolve: @escaping RCTPromiseResolveBlock,
+                                     reject: @escaping RCTPromiseRejectBlock) {
     queue.async {
       guard let url = URL(string: uri) else {
         reject("E_INVALID_URI", "Bad URI: \(uri)", nil)
         return
       }
 
-      // CGImageSource reads dimensions without loading full pixel data
       guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
             let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [CFString: Any] else {
         reject("E_METADATA_FAILED", "Can't read properties for \(uri)", nil)
@@ -155,7 +118,6 @@ class ImageProcessorModule: NSObject {
       let width = props[kCGImagePropertyPixelWidth] as? Int ?? 0
       let height = props[kCGImagePropertyPixelHeight] as? Int ?? 0
 
-      // Get file size
       var fileSize: Int64 = 0
       if url.isFileURL {
         fileSize = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int64) ?? 0
@@ -180,12 +142,10 @@ class ImageProcessorModule: NSObject {
     }
   }
 
-  // MARK: - Thumbnail batch generation
-
-  @objc func generateThumbnails(_ uris: [String],
-                                  thumbSize: Double,
-                                  resolve: @escaping RCTPromiseResolveBlock,
-                                  reject: @escaping RCTPromiseRejectBlock) {
+  @objc public func generateThumbnails(_ uris: [String],
+                                       thumbSize: Double,
+                                       resolve: @escaping RCTPromiseResolveBlock,
+                                       reject: @escaping RCTPromiseRejectBlock) {
     isCancelled = false
 
     queue.async { [weak self] in
@@ -195,7 +155,6 @@ class ImageProcessorModule: NSObject {
       let total = uris.count
       let size = CGFloat(thumbSize)
 
-      // Reuse format across the loop
       let fmt = UIGraphicsImageRendererFormat()
       fmt.scale = 1.0
 
@@ -214,7 +173,6 @@ class ImageProcessorModule: NSObject {
 
         let squareSize = CGSize(width: size, height: size)
         let thumbnail = UIGraphicsImageRenderer(size: squareSize, format: fmt).image { _ in
-          // Center-crop to square
           let origSize = image.size
           let minDim = min(origSize.width, origSize.height)
           let cropRect = CGRect(
@@ -235,11 +193,13 @@ class ImageProcessorModule: NSObject {
           let thumbUri = "file://" + outURL.path
           thumbUris.append(thumbUri)
 
-          self.sendEvent("onProgress", body: [
-            "completed": i + 1,
-            "total": total,
-            "lastUri": thumbUri,
-          ])
+          DispatchQueue.main.async {
+            self.onProgressCallback?([
+              "completed": i + 1,
+              "total": total,
+              "lastUri": thumbUri,
+            ])
+          }
         } catch {
           thumbUris.append("")
         }
@@ -249,13 +209,10 @@ class ImageProcessorModule: NSObject {
     }
   }
 
-  @objc func cancelProcessing() {
+  @objc public func cancelProcessing() {
     isCancelled = true
   }
 
-  // MARK: - Private helpers
-
-  /// Writes a UIImage to the tmp directory, choosing JPEG or PNG based on the original file extension.
   private func writeImageToTmp(_ image: UIImage, originalURI: String, quality: Double, prefix: String) throws -> URL {
     let lower = originalURI.lowercased()
     let isJpeg = lower.hasSuffix(".jpeg") || lower.hasSuffix(".jpg")

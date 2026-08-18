@@ -7,7 +7,7 @@ type Props = {
   isProcessing: boolean;
 };
 
-export const ProgressBar = React.memo(function ProgressBar({
+export const ProgressBar = React.memo(function ProgressBarComponent({
   completed,
   total,
   isProcessing,

@@ -2,16 +2,19 @@ import {StyleSheet} from 'react-native';
 
 export const galleryStyles = StyleSheet.create({
   container: {flex: 1, backgroundColor: '#fff'},
+  flex1: {flex: 1},
   center: {
     flex: 1,
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loadingText: {color: '#333', marginTop: 12},
   header: {paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8},
   title: {fontSize: 22, fontWeight: '700', color: '#000'},
   subtitle: {fontSize: 13, color: '#666', marginTop: 2, marginBottom: 8},
   btnRow: {flexDirection: 'row', marginTop: 8, marginBottom: 4},
+  btnGroup: {flexDirection: 'row', gap: 8},
   primaryBtn: {
     flex: 1,
     backgroundColor: '#007AFF',
@@ -19,6 +22,7 @@ export const galleryStyles = StyleSheet.create({
     alignItems: 'center',
   },
   dangerBtn: {backgroundColor: '#FF3B30', paddingHorizontal: 14, paddingVertical: 8, alignItems: 'center'},
+  dangerBtnFull: {flex: 1, backgroundColor: '#FF3B30', paddingHorizontal: 14, paddingVertical: 8, alignItems: 'center'},
   btnText: {color: '#fff', fontSize: 15, fontWeight: '600'},
   selectBar: {
     flexDirection: 'row',
